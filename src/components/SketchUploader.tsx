@@ -323,10 +323,12 @@ const ResetButton = styled(Button)`
     background: #d1d5db;
   }
 `;
-*/import React, { useState, ChangeEvent } from "react";
+*/
+import React, { useState, ChangeEvent } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import Gallery from "./Gallery";
 
 export default function SketchUploader() {
   const navigate = useNavigate();
@@ -410,41 +412,45 @@ export default function SketchUploader() {
     }
   };
 
-  const uploadImage = async () => {
-    if (!image) return alert("Select an image first!");
-    let token = localStorage.getItem("access_token");
+const uploadImage = async () => {
+  if (!result) return alert("Generate an effect first before uploading!");
 
-    if (token) {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      if (payload.exp * 1000 < Date.now()) {
-        token = await refreshToken();
-        if (!token) return alert("Session expired, please login again!");
-      }
-    } else {
-      return alert("Not logged in!");
+  let token = localStorage.getItem("access_token");
+
+  if (token) {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp * 1000 < Date.now()) {
+      token = await refreshToken();
+      if (!token) return alert("Session expired, please login again!");
     }
+  } else {
+    return alert("Not logged in!");
+  }
 
-    const formData = new FormData();
-    formData.append("image", image, image.name); // include name
-    formData.append("effect", effect);
+  // Convert base64 to Blob
+  const blob = await (await fetch(result)).blob();
+  const file = new File([blob], `${effect}.png`, { type: "image/png" });
 
-    setLoading(true);
-    try {
-      await axios.post("http://127.0.0.1:8000/api/auth/upload/", formData, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
-      });
-      alert("Image uploaded successfully!");
-      resetAll();
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("effect", effect);
 
-      // navigate to gallery without page refresh
-      navigate("/gallery");
-    } catch (err: any) {
-      console.error("Upload error", err.response);
-      alert("Upload failed: " + err.response?.data?.detail || err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    await axios.post("http://127.0.0.1:8000/api/auth/upload/", formData, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+    });
+    alert("Effect-applied image uploaded successfully!");
+    resetAll();
+    navigate("/gallery");
+  } catch (err: any) {
+    console.error("Upload error", err.response);
+    alert("Upload failed: " + err.response?.data?.detail || err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <FullPageContainer>
@@ -491,6 +497,10 @@ export default function SketchUploader() {
 
         <GalleryLink type="button" onClick={() => navigate("/gallery")}>
           🖼️ View My Gallery
+        </GalleryLink>
+
+                <GalleryLink type="button" onClick={() => navigate("/public_gallery")}>
+          🖼️ Public Gallery
         </GalleryLink>
 
         {result && (
