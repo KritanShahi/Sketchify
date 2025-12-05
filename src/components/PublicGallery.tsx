@@ -6,6 +6,7 @@ interface UploadedImage {
   id: number;
   image_url: string;
   effect: string;
+  name: string;
   created_at: string;
   username: string;
 }
@@ -25,7 +26,9 @@ export default function PublicGallery() {
     } finally {
       setLoading(false);
     }
+ 
   };
+     console.log(images);
 
   useEffect(() => {
     fetchImages();
@@ -41,6 +44,7 @@ export default function PublicGallery() {
           <ImageCard key={img.id}>
             <PreviewImage src={img.image_url} alt={img.effect} />
             <EffectLabel>{img.effect}</EffectLabel>
+            {img.name && <CreatedAt>Name: {img.name}</CreatedAt>}
             <CreatedAt>By: {img.username}</CreatedAt>
             <CreatedAt>{new Date(img.created_at).toLocaleString()}</CreatedAt>
           </ImageCard>
@@ -121,4 +125,4 @@ const DeleteButton = styled.button`
   }
 `;
 
-// You can reuse styled components from MyGallery or separate if needed
+
