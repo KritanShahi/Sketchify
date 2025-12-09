@@ -6,6 +6,8 @@ interface User {
   id: number;
   username: string;
   email: string;
+  is_staff: boolean;
+  is_superuser: boolean;
 }
 
 interface Props {
@@ -19,10 +21,11 @@ export default function UserModule({ token }: Props) {
     const fetchUsers = async () => {
       if (!token) return;
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/users/", {
+        const res = await axios.get("http://127.0.0.1:8000/api/auth/users/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(res.data);
+        console.log("Fetched users:", res.data);
       } catch (err) {
         console.error(err);
       }
@@ -38,43 +41,102 @@ export default function UserModule({ token }: Props) {
   return (
     <Module>
       <h1>👥 Users</h1>
-      {users.map((u) => (
-        <Card key={u.id}>
-          <p><b>Username:</b> {u.username}</p>
-          <p><b>Email:</b> {u.email}</p>
-          <Actions>
-            <DeleteButton onClick={() => handleDeleteUser(u.id)}>Delete</DeleteButton>
-          </Actions>
-        </Card>
-      ))}
-      {users.length === 0 && <p>No users found.</p>}
+      {users.length === 0 && <NoUsers>No users found.</NoUsers>}
+      <Grid>
+        {users.map((u) => (
+          <Card key={u.id}>
+            <Username>{u.username}</Username>
+            <Email>{u.email}</Email>
+            <Roles>
+              {u.is_superuser && <RoleBadge>Admin</RoleBadge>}
+              {u.is_staff && !u.is_superuser && <RoleBadge>Staff</RoleBadge>}
+              {!u.is_staff && !u.is_superuser && <RoleBadge>User</RoleBadge>}
+            </Roles>
+            <Actions>
+              <DeleteButton onClick={() => handleDeleteUser(u.id)}>
+                Delete
+              </DeleteButton>
+            </Actions>
+          </Card>
+        ))}
+      </Grid>
     </Module>
   );
 }
 
-const Module = styled.div``;
+// ================= Styled Components =================
+
+const Module = styled.div`
+  padding: 1rem;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
 const Card = styled.div`
   background: #f8fafc;
-  padding: 1rem 1.5rem;
-  border-radius: 1rem;
-  margin-bottom: 1rem;
   border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 160px;
 `;
-const Actions = styled.div`
+
+const Username = styled.p`
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #374151;
+`;
+
+const Email = styled.p`
+  font-size: 0.95rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+`;
+
+const Roles = styled.div`
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  flex-wrap: wrap;
 `;
+
+const RoleBadge = styled.span`
+  background: #3b82f6;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+const Actions = styled.div`
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+`;
+
 const DeleteButton = styled.button`
-  flex: 1;
   background: #ef4444;
   color: #fff;
-  padding: 0.5rem;
+  padding: 0.4rem 0.7rem;
   border-radius: 0.5rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  font-size: 0.85rem;
   &:hover {
     background: #b91c1c;
   }
+`;
+
+const NoUsers = styled.p`
+  margin-top: 1rem;
+  font-style: italic;
+  color: #6b7280;
 `;

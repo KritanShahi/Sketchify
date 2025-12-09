@@ -14,6 +14,10 @@ export default function MyGallery() {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalImage, setModalImage] = useState<string | null>(null);
+  const isAdmin = localStorage.getItem("is_superuser") === "true";
+  const currentUsername = localStorage.getItem("username");
+
+  console.log(isAdmin,currentUsername);
 
   const fetchImages = async () => {
     setLoading(true);
@@ -49,7 +53,7 @@ export default function MyGallery() {
       setLoading(false);
     }
   };
-
+/*
 const deleteImage = async (id: number) => {
   if (!window.confirm("Are you sure you want to delete this image?")) return;
 
@@ -84,30 +88,84 @@ const deleteImage = async (id: number) => {
     alert("Failed to delete image");
   }
 };
+*/
 
-  useEffect(() => {
+const deleteImage = async (id: number, imgUsername: string) => {
+  if (!window.confirm("Are you sure you want to delete this image?")) return;
+
+  let token = localStorage.getItem("access_token");
+  if (!token) return alert("No access token found. Please login again.");
+
+  // Refresh token if expired
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  if (payload.exp * 1000 < Date.now()) {
+    const refresh = localStorage.getItem("refresh_token");
+    if (refresh) {
+      try {
+        const res = await axios.post("http://127.0.0.1:8000/api/token/refresh/", { refresh });
+        token = res.data.access;
+        localStorage.setItem("access_token", token);
+      } catch {
+        return alert("Session expired, please login again!");
+      }
+    } else {
+      return alert("Session expired, please login again!");
+    }
+  }
+
+  // Permission check
+  if (!isAdmin && imgUsername !== currentUsername) {
+    return alert("You do not have permission to delete this image.");
+  }
+
+  try {
+    const url = isAdmin
+      ? `http://127.0.0.1:8000/api/auth/delete-public-image/${id}/`
+      : `http://127.0.0.1:8000/api/auth/delete-image/${id}/`;
+
+    await axios.delete(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setImages(images.filter((img) => img.id !== id));
+    alert("Image deleted!");
+  } catch (err: any) {
+    console.error("Delete error:", err.response || err);
+    alert("Failed to delete image");
+  }
+};
+
+
+useEffect(() => {
     fetchImages();
   }, []);
 
+
+
   return (
     <PageContainer>
-      <GalleryContainer>
-        <Header>🖼️ My Uploaded Images</Header>
+    <GalleryContainer>
+        <Header>🖼️ Image Gallery</Header>
         {loading && <Message>Loading...</Message>}
         <ImagesGrid>
-          {images.length === 0 && !loading && <Message>No images uploaded yet.</Message>}
-          {images.map((img) => (
-            <ImageCard key={img.id}>
-              <PreviewImage src={img.image_url} alt={img.effect} onClick={() => setModalImage(img.image_url)} />
-              <EffectLabel>{img.effect}</EffectLabel>
-              <CreatedAt>By: {img.username}</CreatedAt>
-              <CreatedAt>{new Date(img.created_at).toLocaleString()}</CreatedAt>
-              <Actions>
-                <DeleteButton onClick={() => deleteImage(img.id)}>🗑️ Delete</DeleteButton>
-                <ViewButton onClick={() => setModalImage(img.image_url)}>👁️ View</ViewButton>
-              </Actions>
-            </ImageCard>
-          ))}
+          {images.length === 0 && !loading && <Message>No images found.</Message>}
+          {images.map((img) => {
+   const canDelete = isAdmin || img.username === currentUsername;
+
+
+            return (
+              <ImageCard key={img.id}>
+                <PreviewImage src={img.image_url} alt={img.effect} onClick={() => setModalImage(img.image_url)} />
+                <EffectLabel>{img.effect}</EffectLabel>
+                <CreatedAt>By: {img.username}</CreatedAt>
+                <CreatedAt>{new Date(img.created_at).toLocaleString()}</CreatedAt>
+                <Actions>
+                  {canDelete && <DeleteButton onClick={() => deleteImage(img.id, img.username)}>🗑️ Delete</DeleteButton>}
+                  <ViewButton onClick={() => setModalImage(img.image_url)}>👁️ View</ViewButton>
+                </Actions>
+              </ImageCard>
+            );
+          })}
         </ImagesGrid>
       </GalleryContainer>
 
@@ -128,7 +186,7 @@ const deleteImage = async (id: number) => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  width: 100vw;
+
   background: #f3f4f6;
   display: flex;
   justify-content: center;

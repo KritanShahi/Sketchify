@@ -1,9 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "axios";
 import styled from "styled-components";
-
-
 
 
 export default function Login() {
@@ -11,51 +9,8 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  /*
-const handleLogin = async (e: any) => {
-  e.preventDefault();
-
-  if (!username || !password) {
-    alert("Enter username & password");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const res = await axios.post("http://127.0.0.1:8000/api/auth/login/", {
-      username,
-      password,
-    });
-
-    console.log(res.data); // Check what backend returns
-
-    localStorage.setItem("access_token", res.data.access);
-    localStorage.setItem("refresh_token", res.data.refresh);
-
-    // Decode JWT **after receiving it**
-    const decoded: any = jwt_decode(res.data.access);
-    console.log(decoded); // See the claims
-
-    alert(res.data.message || "Login successful");
-
-    // Navigate based on role
-    if (decoded.is_staff || decoded.is_superuser) {
-      navigate("/admin/home"); // admin dashboard
-    } else {
-      navigate("/home"); // regular user
-    }
-  } catch (err: any) {
-    if (err.response && err.response.data) {
-      alert(JSON.stringify(err.response.data));
-    } else {
-      alert("Login failed: " + err.message);
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-*/const handleLogin = async (e: any) => {
+  
+  const handleLogin = async (e: any) => {
   e.preventDefault();
 
   if (!username || !password) {
@@ -72,6 +27,8 @@ try {
 
   localStorage.setItem("access_token", res.data.access);
   localStorage.setItem("refresh_token", res.data.refresh);
+    localStorage.setItem("username", res.data.username);  // <-- ADD THIS
+    localStorage.setItem("is_superuser", res.data.is_superuser);
 
   alert(res.data.message || "Login successful");
 
@@ -91,6 +48,19 @@ try {
 };
 
 
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const isSuperuser = localStorage.getItem("is_superuser");
+
+    if (token) {
+      // redirect based on user type
+      if (isSuperuser === "true") {
+        navigate("/admin/home", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [navigate]);
 
   return (
     <FullPageContainer>

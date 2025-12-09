@@ -91,48 +91,8 @@ export default function SketchUploader() {
       return null;
     }
   };
-/*
-const uploadImage = async () => {
-  if (!result) return alert("Generate an effect first before uploading!");
 
-  let token = localStorage.getItem("access_token");
-
-  if (token) {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    if (payload.exp * 1000 < Date.now()) {
-      token = await refreshToken();
-      if (!token) return alert("Session expired, please login again!");
-    }
-  } else {
-    return alert("Not logged in!");
-  }
-
-  // Convert base64 to Blob
-  const blob = await (await fetch(result)).blob();
-  const file = new File([blob], `${effect}.png`, { type: "image/png" });
-
-  const formData = new FormData();
-  formData.append("image", file);
-  formData.append("effect", effect);
-  formData.append("name", customName);
-
-  setLoading(true);
-  try {
-    await axios.post("http://127.0.0.1:8000/api/auth/upload/", formData, {
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
-    });
-    alert("Effect-applied image uploaded successfully!");
-    resetAll();
-    navigate("/gallery");
-  } catch (err: any) {
-    console.error("Upload error", err.response);
-    alert("Upload failed: " + err.response?.data?.detail || err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-*/const uploadImage = async (name: string) => {  // accept name as parameter
+  const uploadImage = async (name: string) => {  // accept name as parameter
   if (!result) return alert("Generate an effect first before uploading!");
 
   let token = localStorage.getItem("access_token");
