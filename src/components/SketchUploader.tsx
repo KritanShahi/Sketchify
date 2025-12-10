@@ -92,7 +92,7 @@ export default function SketchUploader() {
     }
   };
 
-  const uploadImage = async (name: string) => {  // accept name as parameter
+const uploadImage = async (name: string) => {
   if (!result) return alert("Generate an effect first before uploading!");
 
   let token = localStorage.getItem("access_token");
@@ -114,16 +114,18 @@ export default function SketchUploader() {
   const formData = new FormData();
   formData.append("image", file);
   formData.append("effect", effect);
-  formData.append("name", name);  // use parameter directly
+  formData.append("name", name);
 
   setLoading(true);
   try {
     await axios.post("http://127.0.0.1:8000/api/auth/upload/", formData, {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
     });
+
     alert("Effect-applied image uploaded successfully!");
     resetAll();
-    navigate("/gallery");
+    navigate("/gallery"); // <- switch to gallery page here
+
   } catch (err: any) {
     console.error("Upload error", err.response);
     alert("Upload failed: " + err.response?.data?.detail || err.message);
@@ -131,6 +133,7 @@ export default function SketchUploader() {
     setLoading(false);
   }
 };
+
 
   return (
    
@@ -149,10 +152,10 @@ export default function SketchUploader() {
             <PreviewImage src={preview} alt="Preview" />
           </PreviewWrapper>
         )}
-
+{/*
         <Button type="button" onClick={analyzeImage} disabled={loading || !image}>
           {loading ? "Analyzing..." : "🔍 Analyze Image"}
-        </Button>
+        </Button>*/}
 
         {(quality || classification || recommendation) && (
           <AnalysisCard>
@@ -186,7 +189,7 @@ export default function SketchUploader() {
 </Button>
 
 
-
+{/*}
 
         <GalleryLink type="button" onClick={() => navigate("/gallery")}>
           🖼️ View My Gallery
@@ -195,7 +198,7 @@ export default function SketchUploader() {
                 <GalleryLink type="button" onClick={() => navigate("/public_gallery")}>
           🖼️ Public Gallery
         </GalleryLink>
-
+*/}
         {result && (
           <ResultWrapper>
             <ResultTitle>Result:</ResultTitle>

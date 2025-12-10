@@ -16,6 +16,7 @@ interface Props {
 
 export default function UserModule({ token }: Props) {
   const [users, setUsers] = useState<User[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -25,7 +26,6 @@ export default function UserModule({ token }: Props) {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(res.data);
-        console.log("Fetched users:", res.data);
       } catch (err) {
         console.error(err);
       }
@@ -33,110 +33,125 @@ export default function UserModule({ token }: Props) {
     fetchUsers();
   }, [token]);
 
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
+  );
+
   const handleDeleteUser = (id: number) => {
     setUsers(users.filter((u) => u.id !== id));
-    // Optional: call backend API to delete
   };
 
   return (
     <Module>
       <h1>👥 Users</h1>
-      {users.length === 0 && <NoUsers>No users found.</NoUsers>}
-      <Grid>
-        {users.map((u) => (
-          <Card key={u.id}>
-            <Username>{u.username}</Username>
-            <Email>{u.email}</Email>
+
+      {/* Search Bar */}
+      <SearchInput
+        type="text"
+        placeholder="Search by username or email..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {filteredUsers.length === 0 && <NoUsers>No users found.</NoUsers>}
+
+      <UserList>
+        {filteredUsers.map((u) => (
+          <UserRow key={u.id}>
+            <Info>
+              <Username>{u.username}</Username>
+              <Email>{u.email}</Email>
+            </Info>
+
             <Roles>
               {u.is_superuser && <RoleBadge>Admin</RoleBadge>}
               {u.is_staff && !u.is_superuser && <RoleBadge>Staff</RoleBadge>}
               {!u.is_staff && !u.is_superuser && <RoleBadge>User</RoleBadge>}
             </Roles>
+
             <Actions>
               <DeleteButton onClick={() => handleDeleteUser(u.id)}>
                 Delete
               </DeleteButton>
             </Actions>
-          </Card>
+          </UserRow>
         ))}
-      </Grid>
+      </UserList>
     </Module>
   );
 }
 
-// ================= Styled Components =================
+/* ------------------- Styles ------------------- */
 
-const Module = styled.div`
-  padding: 1rem;
-`;
+const Module = styled.div``;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const Card = styled.div`
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 160px;
-`;
-
-const Username = styled.p`
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #374151;
-`;
-
-const Email = styled.p`
-  font-size: 0.95rem;
-  color: #374151;
-  margin-bottom: 0.5rem;
-`;
-
-const Roles = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-`;
-
-const RoleBadge = styled.span`
-  background: #3b82f6;
-  color: white;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.3rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-`;
-
-const Actions = styled.div`
-  margin-top: auto;
-  display: flex;
-  justify-content: flex-end;
-`;
-
-const DeleteButton = styled.button`
-  background: #ef4444;
-  color: #fff;
-  padding: 0.4rem 0.7rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  &:hover {
-    background: #b91c1c;
-  }
+const SearchInput = styled.input`
+  padding: 0.75rem 1rem;
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
 `;
 
 const NoUsers = styled.p`
-  margin-top: 1rem;
-  font-style: italic;
+  text-align: center;
   color: #6b7280;
+`;
+
+const UserList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const UserRow = styled.div`
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+`;
+
+const Info = styled.div``;
+
+const Username = styled.h2`
+  font-size: 1.2rem;
+`;
+
+const Email = styled.p`
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+`;
+
+const Roles = styled.div``;
+
+const RoleBadge = styled.span`
+  background: #e0f2fe;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  color: #0369a1;
+`;
+
+const Actions = styled.div``;
+
+const DeleteButton = styled.button`
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
 `;
